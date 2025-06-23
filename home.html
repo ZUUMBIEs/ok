@@ -92,6 +92,37 @@
     color: white;
   }
 
+
+.user-aura-fire { text-shadow: 0 0 6px red, 0 0 12px orange; }
+.user-aura-blue { text-shadow: 0 0 6px #00f, 0 0 12px #0ff; }
+.user-aura-sparkle {
+  position: relative;
+}
+.user-aura-sparkle::after {
+  content: "";
+  position: absolute;
+  left: -2px; right: -2px; top: -2px; bottom: -2px;
+  background: url('https://media.tenor.com/RvlBpzVrvlIAAAAC/stars-sparkle.gif') center/cover;
+  z-index: -1;
+  border-radius: 5px;
+  animation: sparkle 2s linear infinite;
+}
+@keyframes sparkle {
+  0% { opacity: 0.8; }
+  50% { opacity: 0.2; }
+  100% { opacity: 0.8; }
+}
+.user-aura-rainbow {
+  text-shadow:
+    0 0 5px red,
+    0 0 10px orange,
+    0 0 15px yellow,
+    0 0 20px green,
+    0 0 25px blue,
+    0 0 30px indigo,
+    0 0 35px violet;
+}
+
 </style>
 </head>
 <body>
@@ -107,7 +138,8 @@
   
 <p>⭐ Stars: <span id="starCount">0</span>
   <button onclick="collectDailyStars()" style="margin-left:10px;">🎁 Daily +100</button>
-  <button onclick="location.href='shop.html'" style="margin-left:10px;">🛍️ Customize Name</button>
+  <button onclick="location.href='file:///C:/Users/uubun/Downloads/outlines_homepage_button_final.html'">OUTLINES ✨</button>
+
 </p>
 
 <p>Status: <span id="currentStatus"></span> <button onclick="toggleDarkMode()" style="margin-left:10px;">🌓 Dark Mode</button></p>
@@ -139,6 +171,8 @@
 </select>
 <input type="text" id="newStatus" placeholder="Update your status">
 <button onclick="updateMoodStatus()">Update Mood + Status</button>
+
+
 </div>
 
 
@@ -180,6 +214,8 @@
   }
 
   function renderFeed(filterUser = null) {
+  const usernameOutlines = JSON.parse(localStorage.getItem("usernameOutlines") || "{}");
+
     const feed = document.getElementById("feed");
     feed.innerHTML = '<h2>Global Feed</h2>';
     const allUsers = JSON.parse(localStorage.getItem("users") || "[]");
@@ -197,7 +233,11 @@
       const emoji = emojiMap[userObj?.mood] || "";
       const pfp = userObj?.profilePic ? `<img src="${userObj.profilePic}" style="max-height:50px;border-radius:50%;margin-right:10px;">` : "";
       const adminClass = isAdmin(p.user) ? "admin-glow" : "";
-      div.innerHTML = `<p>${pfp}<span class="user-link ${adminClass}" onclick="viewUser('${p.user}')">${p.user}</span> ${emoji}<br>Status: ${userObj?.status || ''}</p><p>${p.text}</p>` +
+
+    const outlines = JSON.parse(localStorage.getItem("usernameOutlines") || "{}");
+    const outlineClass = outlines[p.user] ? outlines[p.user] : "";
+
+      div.innerHTML = `<p>${pfp}<span class="user-link ${adminClass} ${usernameOutlines[p.user] || ""}" onclick="viewUser('${p.user}')">${p.user}</span> ${emoji}<br>Status: ${userObj?.status || ''}</p><p>${p.text}</p>` +
         (p.media ? (p.type.startsWith("video") ? `<video controls src="${p.media}"></video>` : `<img src="${p.media}">`) : "");
       renderComments(div, i);
 
@@ -535,6 +575,38 @@ function giveStars(user, amount) {
   setUserStars(user, getUserStars(user) + amount);
   alert(user + " received " + amount + "⭐");
 }
+
+function giveStars(targetUser, amount) {
+  const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+  const currentUser = localStorage.getItem("currentUser");
+  if (!stars[currentUser]) stars[currentUser] = 0;
+  if (!stars[targetUser]) stars[targetUser] = 0;
+
+  if (stars[currentUser] < amount) {
+    alert("Not enough stars to give!");
+    return;
+  }
+
+  stars[currentUser] -= amount;
+  stars[targetUser] += amount;
+  localStorage.setItem("stars", JSON.stringify(stars));
+  alert(`⭐ You gave ${amount} stars to ${targetUser}!`);
+}
+
+function addFriend(targetUser) {
+  const currentUser = localStorage.getItem("currentUser");
+  const allFriends = JSON.parse(localStorage.getItem("friends") || "{}");
+  if (!allFriends[currentUser]) allFriends[currentUser] = [];
+
+  if (!allFriends[currentUser].includes(targetUser)) {
+    allFriends[currentUser].push(targetUser);
+    localStorage.setItem("friends", JSON.stringify(allFriends));
+    alert(`✅ ${targetUser} has been added as a friend!`);
+  } else {
+    alert(`${targetUser} is already your friend.`);
+  }
+}
+
 </script>
 
 
@@ -638,7 +710,95 @@ function giveStars(user, amount) {
   setUserStars(user, getUserStars(user) + amount);
   alert(user + " received " + amount + "⭐");
 }
+
+function giveStars(targetUser, amount) {
+  const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+  const currentUser = localStorage.getItem("currentUser");
+  if (!stars[currentUser]) stars[currentUser] = 0;
+  if (!stars[targetUser]) stars[targetUser] = 0;
+
+  if (stars[currentUser] < amount) {
+    alert("Not enough stars to give!");
+    return;
+  }
+
+  stars[currentUser] -= amount;
+  stars[targetUser] += amount;
+  localStorage.setItem("stars", JSON.stringify(stars));
+  alert(`⭐ You gave ${amount} stars to ${targetUser}!`);
+}
+
+function addFriend(targetUser) {
+  const currentUser = localStorage.getItem("currentUser");
+  const allFriends = JSON.parse(localStorage.getItem("friends") || "{}");
+  if (!allFriends[currentUser]) allFriends[currentUser] = [];
+
+  if (!allFriends[currentUser].includes(targetUser)) {
+    allFriends[currentUser].push(targetUser);
+    localStorage.setItem("friends", JSON.stringify(allFriends));
+    alert(`✅ ${targetUser} has been added as a friend!`);
+  } else {
+    alert(`${targetUser} is already your friend.`);
+  }
+}
+
 </script>
 
+
+<div style="margin-top: 20px; text-align: center;">
+  <button onclick="playGlobalMusic()" style="padding: 10px 20px; font-weight: bold;">▶️ Play Music</button>
+  <div id="musicPlayer" style="margin-top: 15px;"></div>
+</div>
+
 </body>
+
+<script>
+function playGlobalMusic() {
+  const approved = JSON.parse(localStorage.getItem("playlistApproved") || "[]");
+  const musicPlayer = document.getElementById("musicPlayer");
+
+  if (approved.length === 0) {
+    alert("⚠️ No approved music in the global playlist yet.");
+    return;
+  }
+
+  const pick = approved[Math.floor(Math.random() * approved.length)];
+  const id = pick.split("v=")[1].split("&")[0];
+
+  musicPlayer.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}" frameborder="0" allow="autoplay" allowfullscreen></iframe>`;
+}
+</script>
+
+
+<script>
+function playGlobalMusic() {
+  const approved = JSON.parse(localStorage.getItem("playlistApproved") || "[]");
+  const musicPlayer = document.getElementById("musicPlayer");
+
+  if (approved.length === 0) {
+    alert("⚠️ No approved music in the global playlist yet.");
+    return;
+  }
+
+  const pick = approved[Math.floor(Math.random() * approved.length)];
+  const id = pick.split("v=")[1].split("&")[0];
+
+  musicPlayer.innerHTML = `<iframe width="0" height="0" src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}" frameborder="0" allow="autoplay" allowfullscreen></iframe>`;
+}
+
+function submitGlobalTrack() {
+  const input = document.getElementById("newMusicLink");
+  const link = input.value.trim();
+  if (!link.includes("youtube.com/watch?v=")) {
+    alert("⚠️ Invalid YouTube link.");
+    return;
+  }
+  const pending = JSON.parse(localStorage.getItem("playlistPending") || "[]");
+  pending.push(link);
+  localStorage.setItem("playlistPending", JSON.stringify(pending));
+  input.value = "";
+  alert("✅ Submitted for approval!");
+}
+</script>
+
 </html>
