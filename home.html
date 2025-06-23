@@ -71,20 +71,62 @@
       border-radius: 5px;
       margin-top: 10px;
     }
-  </style>
+  
+  body.dark {
+    background: linear-gradient(270deg, #330000, #331a00, #333300, #003300, #003333, #000033, #1a0033);
+    background-size: 1400% 1400%;
+    animation: rainbowBG 30s ease infinite;
+    color: white;
+  }
+  body.dark .glow-box, body.dark .feed-box, body.dark .users-box, body.dark .profile-box {
+    background-color: rgba(0, 0, 0, 0.85);
+    box-shadow: 0 0 10px #444;
+  }
+  body.dark input, body.dark textarea, body.dark select {
+    background-color: black;
+    color: white;
+    border: 1px solid #555;
+  }
+  body.dark button {
+    background: #444;
+    color: white;
+  }
+
+</style>
 </head>
 <body>
 
-<div class="glow-box" id="mainPage">
+
+<!-- ======================= MAIN PAGE UI ======================= -->
+
+<!-- ======================= MAIN PAGE UI ======================= -->
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; max-width: 1000px; margin: auto;">
+  <div class="glow-box" id="mainPostBox" style="flex: 1; min-width: 280px;">
+
   <h2>Welcome, <span id="currentUserDisplay"></span> <span id="currentMood"></span></h2>
-  <p>Status: <span id="currentStatus"></span></p>
+  
+<p>⭐ Stars: <span id="starCount">0</span>
+  <button onclick="collectDailyStars()" style="margin-left:10px;">🎁 Daily +100</button>
+  <button onclick="location.href='shop.html'" style="margin-left:10px;">🛍️ Customize Name</button>
+</p>
+
+<p>Status: <span id="currentStatus"></span> <button onclick="toggleDarkMode()" style="margin-left:10px;">🌓 Dark Mode</button></p>
   <input type="text" id="postText" placeholder="Write something or paste a link...">
   <input type="file" id="postMedia" accept="image/*,video/*,image/gif">
-  <button onclick="postContent()">Post</button>
-  <button onclick="scrollToFeed()">⬇ Scroll to Feed</button>
+  <!-- === Post Box === -->
+<button onclick="postContent()">Post</button>
+  <!-- === Navigation Buttons === -->
+<button onclick="scrollToFeed()">⬇ Scroll to Feed</button>
     <button onclick="showInbox()">📥 Inbox</button>
     <button onclick="showAdminPanel()">👑 Admin Panel</button>
   <button onclick="showUsers()">👥 Users!</button>
+
+
+  </div> <!-- end of mainPostBox -->
+
+  <div class="glow-box" id="sideControlBox" style="flex: 1; min-width: 300px;">
+    <h3>👤 Profile & Messaging</h3>
+
 <hr>
 <input type="file" id="newPfp" accept="image/*">
 <button onclick="updatePfp()">Update Profile Picture</button>
@@ -99,35 +141,33 @@
 <button onclick="updateMoodStatus()">Update Mood + Status</button>
 </div>
 
-<div class="glow-box hidden" id="messagingSection">
-  <h2>📨 Direct Messages</h2>
-  <select id="recipientSelect"><option value="">Select user to message</option></select>
-  <textarea id="messageInput" placeholder="Type your message..."></textarea>
-  <button onclick="sendMessage()">Send</button>
-  <div id="messagesDisplay" style="margin-top:20px;"></div>
-</div>
 
+<!-- ======================= MESSAGING SECTION ======================= -->
+
+<!-- ======================= FEED SECTION ======================= -->
 <div class="feed-box" id="feed"></div>
-<div class="users-box hidden" id="usersList"></div>
-
-<div class="glow-box hidden" id="inboxSection">
-  <h2>📥 Inbox</h2>
-  <div id="inboxList"></div>
-  <div id="inboxChat" class="hidden">
-    <h3>Chat with <span id="chatUser"></span></h3>
-    <div id="chatMessages" style="margin:10px 0;"></div>
-    <input type="text" id="chatInput" placeholder="Write a reply...">
-    <button onclick="sendReply()">Send</button>
-  </div>
-</div>
+<div id="dynamicSpaceAnchor"></div>
 
 
+<!-- ======================= USERS LIST ======================= -->
+
+<!-- ======================= USERS LIST ======================= -->
+<div class="users-box hidden" id="usersList" style="margin-top: 2rem;"></div>
+
+
+
+<!-- ======================= INBOX SECTION ======================= -->
 <div class="glow-box hidden" id="adminPanel">
   
   <div id="adminUserList"></div>
 </div>
 
-<div class="profile-box hidden" id="userProfile"></div>
+
+<!-- ======================= USER PROFILE ======================= -->
+
+<!-- ======================= USER PROFILE ======================= -->
+<div class="profile-box hidden" id="userProfile" style="margin-top: 2rem;"></div>
+
 
 <script>
   const emojiMap = { happy: '😊', sad: '😢', angry: '😠', tired: '😴' };
@@ -143,24 +183,32 @@
     const feed = document.getElementById("feed");
     feed.innerHTML = '<h2>Global Feed</h2>';
     const allUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    (filterUser ? posts.filter(p => p.user === filterUser) : posts).forEach((p, i) => {
+    const filteredPosts = filterUser ? posts.filter(p => p.user === filterUser) : posts;
+
+    if (filteredPosts.length === 0) {
+      feed.innerHTML += '<p style="opacity: 0.6;">No posts yet. Be the first to post something!</p>';
+      return;
+    }
+
+    filteredPosts.forEach((p, i) => {
       const div = document.createElement("div");
       div.className = "post";
       const userObj = allUsers.find(u => u.username === p.user);
       const emoji = emojiMap[userObj?.mood] || "";
       const pfp = userObj?.profilePic ? `<img src="${userObj.profilePic}" style="max-height:50px;border-radius:50%;margin-right:10px;">` : "";
-      div.innerHTML = `<p>${pfp}<span class="user-link" onclick="viewUser('${p.user}')">${p.user}</span> ${emoji}<br>Status: ${userObj?.status || ''}</p><p>${p.text}</p>` +
+      const adminClass = isAdmin(p.user) ? "admin-glow" : "";
+      div.innerHTML = `<p>${pfp}<span class="user-link ${adminClass}" onclick="viewUser('${p.user}')">${p.user}</span> ${emoji}<br>Status: ${userObj?.status || ''}</p><p>${p.text}</p>` +
         (p.media ? (p.type.startsWith("video") ? `<video controls src="${p.media}"></video>` : `<img src="${p.media}">`) : "");
       renderComments(div, i);
-      
-    if (isAdmin(localStorage.getItem("currentUser"))) {
-      const btn = document.createElement("button");
-      btn.textContent = "🗑️ Remove Post";
-      btn.onclick = () => removePost(i);
-      div.appendChild(btn);
-    }
-    feed.appendChild(div);
-    
+
+      if (isAdmin(localStorage.getItem("currentUser")) || localStorage.getItem("currentUser") === p.user) {
+        const btn = document.createElement("button");
+        btn.textContent = "🗑️ Remove Post";
+        btn.onclick = () => removePost(i);
+        div.appendChild(btn);
+      }
+
+      feed.appendChild(div);
     });
   }
 
@@ -173,7 +221,7 @@
         if (!comments[postIndex]) comments[postIndex] = [];
         comments[postIndex].push({ user: localStorage.getItem("currentUser"), text: commentInput.value });
         localStorage.setItem("comments", JSON.stringify(comments));
-        renderFeed();
+        renderFeed(); updateStarDisplay();
       }
     });
     const comments = JSON.parse(localStorage.getItem("comments") || "{}")[postIndex] || [];
@@ -194,7 +242,7 @@
     const savePost = (dataUrl = null, type = null) => {
       posts.unshift({ user, text, media: dataUrl, type, time: Date.now() });
       localStorage.setItem("posts", JSON.stringify(posts));
-      renderFeed();
+      renderFeed(); updateStarDisplay();
       postCooldown = Date.now() + 120000;
     };
     if (file) { reader.onload = () => savePost(reader.result, file.type); reader.readAsDataURL(file); }
@@ -271,14 +319,14 @@
     if (!currentUser) {
       alert("You are not logged in!");
       window.location.href = "index.html";
-    } else {
-      const user = users.find(u => u.username === currentUser);
-      document.getElementById("currentUserDisplay").innerText = currentUser;
-      document.getElementById("currentMood").innerText = emojiMap[user?.mood] || "";
-      document.getElementById("currentStatus").innerText = user?.status || "";
-      renderFeed();
-      populateUserList();
+      return;
     }
+    const user = users.find(u => u.username === currentUser);
+    document.getElementById("currentUserDisplay").innerText = currentUser;
+    document.getElementById("currentMood").innerText = emojiMap[user?.mood] || "";
+    document.getElementById("currentStatus").innerText = user?.status || "";
+    renderFeed(); updateStarDisplay();
+    populateUserList();
   });
 
   document.addEventListener("mousemove", e => {
@@ -382,7 +430,7 @@ function removePost(index) {
   let posts = JSON.parse(localStorage.getItem("posts") || "[]");
   posts.splice(index, 1);
   localStorage.setItem("posts", JSON.stringify(posts));
-  renderFeed();
+  renderFeed(); updateStarDisplay();
 }
 
 
@@ -407,10 +455,86 @@ function showAdminPanel() {
         <button onclick="deleteUser('${u.username}')">Delete</button>
         <button onclick="grantAdmin('${u.username}')">Make Admin</button>
         <button onclick="removeAdmin('${u.username}')">Remove Admin</button>` : ''}
+${u.username !== 'plibble' ? `
+<button onclick="giveStars('${u.username}', 50)">+50 ⭐</button>
+<button onclick="giveStars('${u.username}', 100)">+100 ⭐</button>` : ''}
+${current === 'plibble' ? `
+<button onclick="giveStars('${u.username}', 500)">👑 +500 ⭐</button>` : ''}
+
       </div>`;
   }).join('');
 }
 
+
+  // Inject a fake invisible post then delete it quickly to trigger the feed
+  window.addEventListener("load", () => {
+    const currentUser = localStorage.getItem("currentUser");
+    if (!currentUser) {
+      alert("You are not logged in!");
+      window.location.href = "index.html";
+      return;
+    }
+    const user = users.find(u => u.username === currentUser);
+    document.getElementById("currentUserDisplay").innerText = currentUser;
+    document.getElementById("currentMood").innerText = emojiMap[user?.mood] || "";
+    document.getElementById("currentStatus").innerText = user?.status || "";
+    renderFeed(); updateStarDisplay();
+    populateUserList();
+  });
+
+
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("darkMode", document.body.classList.contains("dark") ? "1" : "0");
+}
+window.addEventListener("load", () => {
+  if (localStorage.getItem("darkMode") === "1") {
+    document.body.classList.add("dark");
+  }
+});
+
+
+function getUserStars(user) {
+  const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+  return stars[user] || 0;
+}
+
+function setUserStars(user, amount) {
+  const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+  stars[user] = amount;
+  localStorage.setItem("stars", JSON.stringify(stars));
+}
+
+function updateStarDisplay() {
+  const user = localStorage.getItem("currentUser");
+  document.getElementById("starCount").innerText = getUserStars(user);
+}
+
+function collectDailyStars() {
+  const user = localStorage.getItem("currentUser");
+  const lastClaim = JSON.parse(localStorage.getItem("dailyLogin") || "{}");
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  if (lastClaim[user] && now - lastClaim[user] < oneDay) {
+    alert("You already collected your daily reward.");
+    return;
+  }
+
+  setUserStars(user, getUserStars(user) + 100);
+  lastClaim[user] = now;
+  localStorage.setItem("dailyLogin", JSON.stringify(lastClaim));
+  updateStarDisplay();
+  alert("+100 Stars!");
+}
+
+
+function giveStars(user, amount) {
+  const current = localStorage.getItem("currentUser");
+  if (!["plibble", "skid"].includes(current)) return alert("Only plibble or skid can give stars.");
+  setUserStars(user, getUserStars(user) + amount);
+  alert(user + " received " + amount + "⭐");
+}
 </script>
 
 
@@ -443,6 +567,76 @@ function updateMoodStatus() {
     alert("Mood and status updated!");
     location.reload();
   }
+}
+
+  // Inject a fake invisible post then delete it quickly to trigger the feed
+  window.addEventListener("load", () => {
+    const currentUser = localStorage.getItem("currentUser");
+    if (!currentUser) {
+      alert("You are not logged in!");
+      window.location.href = "index.html";
+      return;
+    }
+    const user = users.find(u => u.username === currentUser);
+    document.getElementById("currentUserDisplay").innerText = currentUser;
+    document.getElementById("currentMood").innerText = emojiMap[user?.mood] || "";
+    document.getElementById("currentStatus").innerText = user?.status || "";
+    renderFeed(); updateStarDisplay();
+    populateUserList();
+  });
+
+
+function toggleDarkMode() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("darkMode", document.body.classList.contains("dark") ? "1" : "0");
+}
+window.addEventListener("load", () => {
+  if (localStorage.getItem("darkMode") === "1") {
+    document.body.classList.add("dark");
+  }
+});
+
+
+function getUserStars(user) {
+  const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+  return stars[user] || 0;
+}
+
+function setUserStars(user, amount) {
+  const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+  stars[user] = amount;
+  localStorage.setItem("stars", JSON.stringify(stars));
+}
+
+function updateStarDisplay() {
+  const user = localStorage.getItem("currentUser");
+  document.getElementById("starCount").innerText = getUserStars(user);
+}
+
+function collectDailyStars() {
+  const user = localStorage.getItem("currentUser");
+  const lastClaim = JSON.parse(localStorage.getItem("dailyLogin") || "{}");
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  if (lastClaim[user] && now - lastClaim[user] < oneDay) {
+    alert("You already collected your daily reward.");
+    return;
+  }
+
+  setUserStars(user, getUserStars(user) + 100);
+  lastClaim[user] = now;
+  localStorage.setItem("dailyLogin", JSON.stringify(lastClaim));
+  updateStarDisplay();
+  alert("+100 Stars!");
+}
+
+
+function giveStars(user, amount) {
+  const current = localStorage.getItem("currentUser");
+  if (!["plibble", "skid"].includes(current)) return alert("Only plibble or skid can give stars.");
+  setUserStars(user, getUserStars(user) + amount);
+  alert(user + " received " + amount + "⭐");
 }
 </script>
 
