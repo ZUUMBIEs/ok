@@ -1,0 +1,128 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Buy Username Outlines</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #111, #000);
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+    .glow-box {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px #fff3;
+    }
+    .outline-preview {
+      font-size: 32px;
+      margin: 15px;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .user-aura-fire { text-shadow: 0 0 6px red, 0 0 12px orange; }
+    .user-aura-blue { text-shadow: 0 0 6px #00f, 0 0 12px #0ff; }
+    .user-aura-sparkle {
+      position: relative;
+    }
+    .user-aura-sparkle::after {
+      content: "";
+      position: absolute;
+      left: -5px; right: -5px; top: -5px; bottom: -5px;
+      background: url('https://media.tenor.com/RvlBpzVrvlIAAAAC/stars-sparkle.gif') center/cover;
+      z-index: -1;
+      border-radius: 8px;
+      animation: sparkle 2s linear infinite;
+    }
+    @keyframes sparkle {
+      0% { opacity: 0.8; }
+      50% { opacity: 0.2; }
+      100% { opacity: 0.8; }
+    }
+    .user-aura-rainbow {
+      text-shadow:
+        0 0 5px red,
+        0 0 10px orange,
+        0 0 15px yellow,
+        0 0 20px green,
+        0 0 25px blue,
+        0 0 30px indigo,
+        0 0 35px violet;
+    }
+    .price-tag {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-weight: bold;
+      border: none;
+      background: white;
+      color: black;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-box">
+    <h2>✨ Buy Username Outlines</h2>
+    <p id="balance">Loading stars...</p>
+
+    <div class="outline-preview user-aura-fire" onclick="buyEffect('user-aura-fire', 200)">
+      Fire Aura
+      <div class="price-tag">200⭐</div>
+    </div>
+
+    <div class="outline-preview user-aura-blue" onclick="buyEffect('user-aura-blue', 100)">
+      Blue Glow
+      <div class="price-tag">100⭐</div>
+    </div>
+
+    <div class="outline-preview user-aura-sparkle" onclick="buyEffect('user-aura-sparkle', 300)">
+      Sparkle Aura
+      <div class="price-tag">300⭐</div>
+    </div>
+
+    <div class="outline-preview user-aura-rainbow" onclick="buyEffect('user-aura-rainbow', 500)">
+      Rainbow Glow
+      <div class="price-tag">500⭐</div>
+    </div>
+
+    <button onclick="location.href='file:///C:/Users/uubun/Downloads/home_outline_button_linked_correctly.html'">Homepage</button>
+  </div>
+
+  <script>
+    const user = localStorage.getItem("currentUser") || "guest";
+    const stars = JSON.parse(localStorage.getItem("stars") || "{}");
+    const usernameOutlines = JSON.parse(localStorage.getItem("usernameOutlines") || "{}");
+
+    if (!stars[user]) stars[user] = 500;
+    localStorage.setItem("stars", JSON.stringify(stars));
+
+    document.getElementById("balance").innerText = "⭐ Stars: " + stars[user];
+
+    function buyEffect(className, cost) {
+      if (stars[user] < cost) {
+        alert("Not enough stars!");
+        return;
+      }
+
+      stars[user] -= cost;
+      usernameOutlines[user] = className;
+      localStorage.setItem("stars", JSON.stringify(stars));
+      localStorage.setItem("usernameOutlines", JSON.stringify(usernameOutlines));
+      document.getElementById("balance").innerText = "⭐ Stars: " + stars[user];
+      alert("✅ Outline applied!");
+    }
+  </script>
+</body>
+</html>
