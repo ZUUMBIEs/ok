@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Home - Rainbow Social</title>
+  <title>Home - 762 </title>
   <style>
     :root {
       --glow: #fff;
@@ -32,6 +32,16 @@
       padding: 1rem;
       margin: 1rem auto;
       max-width: 600px;
+    }
+    .admin-glow {
+      animation: glowColor 5s linear infinite;
+    }
+    @keyframes glowColor {
+      0% { text-shadow: 0 0 10px red; color: red; }
+      25% { text-shadow: 0 0 10px orange; color: orange; }
+      50% { text-shadow: 0 0 10px yellow; color: yellow; }
+      75% { text-shadow: 0 0 10px green; color: green; }
+      100% { text-shadow: 0 0 10px blue; color: blue; }
     }
     button {
       background: var(--glow);
@@ -85,58 +95,78 @@
   <button onclick="showInbox()">📥 Inbox</button>
   <button onclick="showAdminPanel()">👑 Admin Panel</button>
   <button onclick="showUsers()">👥 Users!</button>
+  <hr>
+  <input type="file" id="newPfp" accept="image/*">
+  <button onclick="updatePfp()">Update Profile Picture</button>
+  <select id="newMood">
+    <option value="">Mood...</option>
+    <option value="happy">😊 Happy</option>
+    <option value="sad">😢 Sad</option>
+    <option value="angry">😠 Angry</option>
+    <option value="tired">😴 Tired</option>
+  </select>
+  <input type="text" id="newStatus" placeholder="Update your status">
+  <button onclick="updateMoodStatus()">Update Mood + Status</button>
 </div>
 
-<div class="glow-box hidden" id="adminPanel">
-  <div id="adminUserList"></div>
-</div>
-
-<!-- rest of your HTML stays unchanged -->
+<!-- all original content remains -->
 
 <script>
-// your other scripts remain here above this function
+// Place these helper functions at the bottom
+function updatePfp() {
+  const file = document.getElementById("newPfp").files[0];
+  const reader = new FileReader();
+  const currentUser = localStorage.getItem("currentUser");
+  reader.onload = () => {
+    let users = JSON.parse(localStorage.getItem("users") || "[]");
+    const user = users.find(u => u.username === currentUser);
+    if (user) user.profilePic = reader.result;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Profile picture updated!");
+    location.reload();
+  };
+  if (file) reader.readAsDataURL(file);
+}
 
-function showAdminPanel() {
-  const current = localStorage.getItem("currentUser");
-  if (!isAdmin(current)) return alert("Access denied.");
+function updateMoodStatus() {
+  const mood = document.getElementById("newMood").value;
+  const status = document.getElementById("newStatus").value;
+  const currentUser = localStorage.getItem("currentUser");
+  let users = JSON.parse(localStorage.getItem("users") || "[]");
+  const user = users.find(u => u.username === currentUser);
+  if (user) {
+    if (mood) user.mood = mood;
+    if (status) user.status = status;
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Mood and status updated!");
+    location.reload();
+  }
+}
 
-  const users = JSON.parse(localStorage.getItem("users") || "[]");
-  const admins = JSON.parse(localStorage.getItem("admins") || "[]");
-  const panel = document.getElementById("adminPanel");
-  const container = document.getElementById("adminUserList");
-  panel.classList.remove("hidden");
-
-  // Add IP placeholder
-  container.innerHTML = `
-    <div style="padding:10px;">
-      <b>Your IP:</b> <span id="adminIP">Loading...</span>
-    </div>`;
-
-  // Add user controls
-  container.innerHTML += users.map(u => {
-    const isAdmin = u.username === "plibble" ? "👑" : (admins.includes(u.username) ? "⭐" : "");
-    return `
-      <div style="border-top:1px solid #fff; padding:10px;">
-        <b>${u.username}</b> ${isAdmin}<br>
-        Password: ${u.password}<br>
-        <input placeholder="Rename..." id="rn_${u.username}">
-        <button onclick="renameUser('${u.username}', document.getElementById('rn_${u.username}').value)">Rename</button>
-        ${u.username !== 'plibble' ? `
-          <button onclick="deleteUser('${u.username}')">Delete</button>
-          <button onclick="grantAdmin('${u.username}')">Make Admin</button>
-          <button onclick="removeAdmin('${u.username}')">Remove Admin</button>` : ''}
-      </div>`;
-  }).join('');
-
-  // Fetch and display IP
-  fetch("https://api.ipify.org?format=json")
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("adminIP").innerText = data.ip;
-    })
-    .catch(() => {
-      document.getElementById("adminIP").innerText = "Error fetching IP";
-    });
+// Modify renderFeed to allow delete by post owner
+function renderFeed(filterUser = null) {
+  const feed = document.getElementById("feed");
+  feed.innerHTML = '<h2>Global Feed</h2>';
+  const allUsers = JSON.parse(localStorage.getItem("users") || "[]");
+  (filterUser ? posts.filter(p => p.user === filterUser) : posts).forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "post";
+    const userObj = allUsers.find(u => u.username === p.user);
+    const emoji = emojiMap[userObj?.mood] || "";
+    const pfp = userObj?.profilePic ? `<img src="${userObj.profilePic}" style="max-height:50px;border-radius:50%;margin-right:10px;">` : "";
+    const isCurrentUser = localStorage.getItem("currentUser") === p.user;
+    const adminClass = isAdmin(p.user) ? "admin-glow" : "";
+    div.innerHTML = `<p>${pfp}<span class="user-link ${adminClass}" onclick="viewUser('${p.user}')">${p.user}</span> ${emoji}<br>Status: ${userObj?.status || ''}</p><p>${p.text}</p>` +
+      (p.media ? (p.type.startsWith("video") ? `<video controls src="${p.media}"></video>` : `<img src="${p.media}">`) : "");
+    renderComments(div, i);
+    if (isCurrentUser || isAdmin(localStorage.getItem("currentUser"))) {
+      const btn = document.createElement("button");
+      btn.textContent = "🗑️ Remove Post";
+      btn.onclick = () => removePost(i);
+      div.appendChild(btn);
+    }
+    feed.appendChild(div);
+  });
 }
 </script>
 
